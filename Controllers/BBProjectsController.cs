@@ -11,13 +11,15 @@ using TFBackend.Data;
 using TFBackend.Entities.Dto.BBProject;
 using TFBackend.Entities.Dto.Skills;
 using TFBackend.Entities.Dto.Staff;
+using TFBackend.Helper;
 using TFBackend.Models;
+using CoreApiResponse;
 
 namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BBProjectsController : ControllerBase
+    public class BBProjectsController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -30,7 +32,7 @@ namespace TFBackend.Controllers
 
         // GET: api/Projects
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BBProjectDto>>> GetProjects()
+        public async Task<IActionResult> GetProjects()
         {
             var projects = from p in _context.Projects
                            select new BBProjectDto()
@@ -72,7 +74,9 @@ namespace TFBackend.Controllers
                                                                    }).ToList()
                                     }).ToList()
                            };
-            return Ok(projects);
+
+
+            return CustomResult("Success",   projects );
         }
 
         // GET: api/Projects/5

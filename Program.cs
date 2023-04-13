@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json.Serialization;
 using TFBackend.Data;
-
 namespace TFBackend
 {
     public class Program
@@ -14,12 +12,11 @@ namespace TFBackend
             builder.Services.AddControllers();
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-
             builder.Services.AddDbContext<ApplicationDbContext>(opt =>
             {
                 opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
-                
+
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -36,7 +33,6 @@ namespace TFBackend
             }
 
             app.UseHttpsRedirection();
-
             app.UseAuthorization();
 
             app.MapControllers();
