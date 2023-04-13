@@ -30,9 +30,9 @@ namespace TFBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Skill>>> GetSkills()
         {
-            var skills = _context.Skills.Select(skills => _mapper.Map<SkillsDto>(skills));
+            var skills = await _context.Skills.Select(skills => _mapper.Map<SkillsDto>(skills)).ToListAsync();
             return Ok(skills);
-        }
+        }   
 
         // GET: api/Skills/5
         [HttpGet("{id}")]

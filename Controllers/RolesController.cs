@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TFBackend.Data;
-using TFBackend.Entities.Dto.Roll;
+using TFBackend.Entities.Dto.Role;
 using TFBackend.Models;
 
 
@@ -17,58 +17,58 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RollsController : ControllerBase
+    public class RolesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
 
-        public RollsController(ApplicationDbContext context, IMapper mapper)
+        public RolesController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
         }
 
-        // GET: api/Rolls
+        // GET: api/Roles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Roll>>> GetRolls()
+        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
         {
-            var rolls = _context.Rolls.Select(rolls => _mapper.Map<RollsDto>(rolls));
-            return Ok(rolls);
+            var roles = _context.Roles.Select(role => _mapper.Map<RolesDto>(role));
+            return Ok(roles);
         }
 
-        // GET: api/Rolls/5
+        // GET: api/Roles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Roll>> GetRoll(int id)
+        public async Task<ActionResult<Role>> GetRoll(int id)
         {
-            var roll = await _context.Rolls.FindAsync(id);
+            var role = await _context.Roles.FindAsync(id);
 
-            if (roll == null)
+            if (role == null)
             {
                 return NotFound();
             }
 
-            var rollDto = _mapper.Map<RollsDto>(roll);
+            var rollDto = _mapper.Map<RolesDto>(role);
 
             return Ok(rollDto);
         }
 
-        // PUT: api/Rolls/5
+        // PUT: api/Roles/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutRoll(int id, RollsPutDto rollDto)
+        public async Task<IActionResult> PutRole(int id, RolesPutDto roleDto)
         {
-            var roll = _context.Rolls.FirstOrDefault(r => r.Id == id);
-            if (id != roll.Id)
+            var role = _context.Roles.FirstOrDefault(r => r.Id == id);
+            if (id != role.Id)
             {
                 return BadRequest();
             }
 
-            roll.Name = rollDto.Name;
+            role.Name = roleDto.Name;
 
             try
             {
                 var rollUpdate = await _context.SaveChangesAsync();
-                return Ok(rollDto);
+                return Ok(roleDto);
             }
             catch (Exception e)
             {
@@ -80,18 +80,18 @@ namespace TFBackend.Controllers
         // POST: api/Rolls
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Roll>> PostRoll(RollsPostDto rollDto)
+        public async Task<ActionResult<Role>> PostRole(RolesPostDto roleDto)
         {
-            var roll = new Roll
+            var role = new Role
             {
-                Name = rollDto.Name
+                Name = roleDto.Name
             };
 
             try
             {
-                await _context.Rolls.AddAsync(roll);
+                await _context.Roles.AddAsync(role);
                 var result = await _context.SaveChangesAsync();
-                return Ok(roll);
+                return Ok(role);
             }
             catch (Exception e)
             {
@@ -104,18 +104,18 @@ namespace TFBackend.Controllers
         [HttpPut("delete/{id}")]
         public async Task<IActionResult> DeleteRoll(int id)
         {
-            var roll = await _context.Rolls.FindAsync(id);
-            if (roll == null)
+            var role = await _context.Roles.FindAsync(id);
+            if (role == null)
             {
                 return NotFound();
             }
 
             //change all staff with corresponing rollId to null
-            List<Staff> staff_list = _context.Staff.Where(s => s.RollId == id).ToList();
+            List<Staff> staff_list = _context.Staff.Where(s => s.RoleId == id).ToList();
 
             foreach(var staff in staff_list)
             {
-                staff.RollId = null;
+                staff.RoleId = null;
                 try
                 {
                     _context.Entry(staff).State = EntityState.Modified;
@@ -124,8 +124,8 @@ namespace TFBackend.Controllers
                 catch (Exception e) { return BadRequest(e.Message); }
             }
 
-            //delete roll
-            _context.Rolls.Remove(roll); 
+            //delete role
+            _context.Roles.Remove(role); 
             await _context.SaveChangesAsync();
 
             return NoContent();

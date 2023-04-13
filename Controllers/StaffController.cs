@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using TFBackend.Data;
-using TFBackend.Entities.Dto.Roll;
+using TFBackend.Entities.Dto.Role;
 using TFBackend.Entities.Dto.Skills;
 using TFBackend.Entities.Dto.Staff;
 using TFBackend.Entities.Dto.StaffSkills;
@@ -34,51 +34,56 @@ namespace TFBackend.Controllers
         public async Task<ActionResult<IEnumerable<Staff>>> GetStaff()
         {
             //var staff = _context.Staff.Select(staff => _mapper.Map<StaffDto>(staff));
-
-            var staff = from s in _context.Staff
-                        select new StaffDto()
-                        {
-                            Id = s.Id,
-                            Name = s.Name,
-                            Picture = s.Picture,
-                            Available = s.Available,
-                            AvailableDate = s.AvailableDate,
-                            Roll = _context.Rolls.FirstOrDefault(r => r.Id == s.RollId).Name,
-                            skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill) select 
-                                     new SkillsDto()
-                            {
-                                Id = k.Id,
-                                Name = k.Name,
-                                Color = k.Color,
-                            })
-                        };
-            return Ok(staff);
+           
+            var staff = await _context.Staff
+                   .Join(_context.Roles, s => s.RoleId, r => r.Id, (s, r) => new { Staff = s, Role = r })
+                   .GroupJoin(_context.StaffSkills, sr => sr.Staff.Id, sk => sk.StaffId, (sr, ssk) => new { StaffRole = sr, StaffSkills = ssk })
+                   .SelectMany(srs => srs.StaffSkills.DefaultIfEmpty(), (srs, sk) => new { StaffRoleSkills = srs, Skill = sk != null ? sk.Skill : null })
+                   .Select(s => new StaffDto
+                   {
+                       Id = s.StaffRoleSkills.StaffRole.Staff.Id,
+                       Name = s.StaffRoleSkills.StaffRole.Staff.Name,
+                       Picture = s.StaffRoleSkills.StaffRole.Staff.Picture,
+                       Available = s.StaffRoleSkills.StaffRole.Staff.Available,
+                       AvailableDate = s.StaffRoleSkills.StaffRole.Staff.AvailableDate,
+                       Role = s.StaffRoleSkills.StaffRole.Role.Name ?? "",
+                       skills = new List<SkillsDto> { new SkillsDto { Id = s.Skill.Id, Name = s.Skill.Name, Color = s.Skill.Color } }
+                   })
+                   .ToListAsync();
+            return  Ok(staff);
         }
 
         // GET: api/Staffs/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Staff>> GetStaff(int id)
         {
-            var staff = _context.Staff.FirstOrDefault(s => s.Id == id);
+            var staff = await _context.Staff.FirstOrDefaultAsync(s => s.Id == id);
             if (staff == null)
-                return NotFound($"Staff with id{id} cannot be found");
+                return NotFound($"Staff with    id{id} cannot be found");
 
-            var staffDto = new StaffDto()
-            {
-                Id = staff.Id,
-                Name = staff.Name,
-                Picture = staff.Picture,
-                Available = staff.Available,
-                AvailableDate = staff.AvailableDate,
-                Roll = _context.Rolls.FirstOrDefault(r => r.Id == staff.RollId).Name,
-                skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k=>k.StaffId == id).Select(k=>k.Skill)select
-                                           new SkillsDto()
-                                           {
-                                               Id = k.Id,
-                                               Name = k.Name,
-                                               Color = k.Color,
-                                           }).ToList()
-            };
+            var staffDto  = await _context.Staff
+                                .Join(_context.Roles, s => s.RoleId, r => r.Id, (s, r) => new { Staff = s, RoleName = r.Name })
+                                .Where(sr => sr.Staff.Id == id)
+                                .Select(sr => new StaffDto
+                                {
+                                    Id = sr.Staff.Id,
+                                    Name = sr.Staff.Name,
+                                    Picture = sr.Staff.Picture,
+                                    Available = sr.Staff.Available,
+                                    AvailableDate = sr.Staff.AvailableDate,
+                                    Role = sr.RoleName,
+                                    skills = _context.StaffSkills
+                                        .Where(ss => ss.StaffId == id)
+                                        .Select(ss => ss.Skill)
+                                        .Select(k => new SkillsDto
+                                        {
+                                            Id = k.Id,
+                                            Name = k.Name,
+                                            Color = k.Color
+                                        })
+                                        .ToList()
+                                })
+                                .FirstOrDefaultAsync();
             return Ok(staffDto);
             
         }
@@ -112,9 +117,9 @@ namespace TFBackend.Controllers
             {
                 staff.AvailableDate = staffDto.AvailableDate;
             }
-            if(staffDto.RollId != 0)
+            if(staffDto.RoleId != 0)
             {
-                staff.RollId = staffDto.RollId;
+                staff.RoleId = staffDto.RoleId;
             }
             
             //To update many to many relationship, all related rows in database must be clear first, then add new rows
@@ -181,8 +186,8 @@ namespace TFBackend.Controllers
             {
                 Name = staffDto.Name,
                 Picture = staffDto.Picture,
-                RollId = staffDto.RollId,
-                Roll = _context.Rolls.FirstOrDefault(r => r.Id == staffDto.RollId),
+                RoleId = staffDto.RoleId,
+                Role = _context.Roles.FirstOrDefault(r => r.Id == staffDto.RoleId),
                 Available = staffDto.Available,
                 AvailableDate = staffDto.AvailableDate,
             };

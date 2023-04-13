@@ -50,7 +50,7 @@ namespace TFBackend.Controllers
                                         Picture = s.Picture,
                                         Available = s.Available,
                                         AvailableDate = s.AvailableDate,
-                                        Roll = _context.Rolls.FirstOrDefault(r => r.Id == s.RollId).Name,
+                                        Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
                                         skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
                                                                    select
                                                                    new SkillsDto()
@@ -84,7 +84,7 @@ namespace TFBackend.Controllers
                     Picture= s.Picture,
                     Available= s.Available,
                     AvailableDate= s.AvailableDate,
-                    Roll = _context.Rolls.FirstOrDefault(r => r.Id == s.RollId).Name,
+                    Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
                     skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill) select
                                                new SkillsDto()
                                                {

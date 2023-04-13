@@ -1,6 +1,6 @@
 ﻿using TFBackend.Entities.Dto.Skills;
 using TFBackend.Models;
-
+using TFBackend.Entities.Dto.Role;
 namespace TFBackend.Entities.Dto.Staff
 {
     public class StaffDto
@@ -10,7 +10,7 @@ namespace TFBackend.Entities.Dto.Staff
         public string Picture { get; set; }
         public string Available { get; set; }
         public string AvailableDate { get; set; }
-        public string Roll { get; set; }
+        public string Role { get; set; }
         public List<SkillsDto>? skills { get; set; }
 
     }
