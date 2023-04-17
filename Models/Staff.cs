@@ -12,7 +12,7 @@ namespace TFBackend.Models
         public string Picture {get;set;}
         public string Available {get;set;}
         public string AvailableDate{get;set;}
-        
+        public string password { get; set; }
         //one to many realtionship
         public int? RoleId { get;set;}
         public Role? Role { get;set;}
