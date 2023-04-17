@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RolesController : ControllerBase
+    public class RolesController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -30,26 +31,26 @@ namespace TFBackend.Controllers
 
         // GET: api/Roles
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
+        public async Task<IActionResult> GetRoles()
         {
             var roles = _context.Roles.Select(role => _mapper.Map<RolesDto>(role));
-            return Ok(roles);
+            return CustomResult("Success",roles);
         }
 
         // GET: api/Roles/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Role>> GetRoll(int id)
+        public async Task<IActionResult> GetRoll(int id)
         {
             var role = await _context.Roles.FindAsync(id);
 
             if (role == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             var rollDto = _mapper.Map<RolesDto>(role);
 
-            return Ok(rollDto);
+            return CustomResult("Success",rollDto);
         }
 
         // PUT: api/Roles/5
@@ -58,9 +59,9 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutRole(int id, RolesPutDto roleDto)
         {
             var role = _context.Roles.FirstOrDefault(r => r.Id == id);
-            if (id != role.Id)
+            if (role == null)
             {
-                return BadRequest();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             role.Name = roleDto.Name;
@@ -68,11 +69,11 @@ namespace TFBackend.Controllers
             try
             {
                 var rollUpdate = await _context.SaveChangesAsync();
-                return Ok(roleDto);
+                return CustomResult("Success",roleDto);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
 
         }
@@ -80,7 +81,7 @@ namespace TFBackend.Controllers
         // POST: api/Rolls
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Role>> PostRole(RolesPostDto roleDto)
+        public async Task<IActionResult> PostRole(RolesPostDto roleDto)
         {
             var role = new Role
             {
@@ -91,11 +92,11 @@ namespace TFBackend.Controllers
             {
                 await _context.Roles.AddAsync(role);
                 var result = await _context.SaveChangesAsync();
-                return Ok(role);
+                return CustomResult("Success",role);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -107,7 +108,7 @@ namespace TFBackend.Controllers
             var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             //change all staff with corresponing rollId to null
@@ -121,14 +122,14 @@ namespace TFBackend.Controllers
                     _context.Entry(staff).State = EntityState.Modified;
                     var staff_result = await _context.SaveChangesAsync();
                 }
-                catch (Exception e) { return BadRequest(e.Message); }
+                catch (Exception e) { return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest); }
             }
 
             //delete role
             _context.Roles.Remove(role); 
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
         }
     }
 }

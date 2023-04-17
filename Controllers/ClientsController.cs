@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
+﻿using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TFBackend.Data;
@@ -17,7 +12,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ClientsController : ControllerBase
+    public class ClientsController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -30,7 +25,7 @@ namespace TFBackend.Controllers
 
         // GET: api/Clients
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetClient()
+        public async Task<IActionResult> GetClient()
         {
             
             
@@ -62,18 +57,18 @@ namespace TFBackend.Controllers
                                     }).ToList()
                          };
             
-            return Ok(client);
+            return CustomResult("Success",client);
         }
 
         // GET: api/Clients/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Client>> GetClient(int id)
+        public async Task<IActionResult> GetClient(int id)
         {
             var client = await _context.Client.FindAsync(id);
 
             if (client == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             List<StaffDto> staff = (List<StaffDto>)(from s in _context.StaffClients.Where(s => s.ClientId == id).Select(s => s.Staff) select
@@ -105,7 +100,7 @@ namespace TFBackend.Controllers
                 Staff = staff
             };
 
-            return Ok(clientDto);
+            return CustomResult("Success",clientDto);
         }
 
         // PUT: api/Clients/5
@@ -114,9 +109,9 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutClient(int id, ClientPutDto clientDto)
         {
             var client = _context.Client.FirstOrDefault(c => c.Id == id);
-            if (id != client.Id)
+            if (client == null)
             {
-                return BadRequest();
+                return CustomResult("Not found",System.Net.HttpStatusCode.NotFound);
             }
 
             //_context.Entry(client).State = EntityState.Modified;
@@ -160,7 +155,7 @@ namespace TFBackend.Controllers
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
-                        return BadRequest(e.Message);
+                        return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
                     }
                 };
             }
@@ -173,7 +168,7 @@ namespace TFBackend.Controllers
             {
                 if (!ClientExists(id))
                 {
-                    return NotFound();
+                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -187,7 +182,7 @@ namespace TFBackend.Controllers
         // POST: api/Clients
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Client>> PostClient(ClientPostDto clientDto)
+        public async Task<IActionResult> PostClient(ClientPostDto clientDto)
         {
             //create new client
             var client = new Client()
@@ -247,7 +242,7 @@ namespace TFBackend.Controllers
                             catch (Exception e)
                             {
                                 Console.WriteLine(e.Message);
-                                return BadRequest(e.Message);
+                                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
                             }
                         }
                     }
@@ -258,7 +253,7 @@ namespace TFBackend.Controllers
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
 
         }
@@ -270,7 +265,7 @@ namespace TFBackend.Controllers
             var client = await _context.Client.FindAsync(id);
             if (client == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
             //change all project with corresponding clientId to null
             List<BBProject> project_list = _context.Projects.Where(p=>p.ClientId == id).ToList();
@@ -282,14 +277,14 @@ namespace TFBackend.Controllers
                     _context.Entry(project).State = EntityState.Modified;
                     var project_result = await _context.SaveChangesAsync();
                 }
-                catch (Exception e) { return BadRequest(e.Message); }
+                catch (Exception e) { return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest); }
             }
 
             //delete client
             _context.Client.Remove(client);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
         }
 
         private bool ClientExists(int id)

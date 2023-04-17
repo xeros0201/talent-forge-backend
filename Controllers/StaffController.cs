@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class StaffController : ControllerBase
+    public class StaffController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -31,7 +32,7 @@ namespace TFBackend.Controllers
 
         // GET: api/Staffs
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Staff>>> GetStaff()
+        public async Task<IActionResult> GetStaff()
         {
             //var staff = _context.Staff.Select(staff => _mapper.Map<StaffDto>(staff));
            
@@ -50,16 +51,16 @@ namespace TFBackend.Controllers
                        skills = new List<SkillsDto> { new SkillsDto { Id = s.Skill.Id, Name = s.Skill.Name, Color = s.Skill.Color } }
                    })
                    .ToListAsync();
-            return  Ok(staff);
+            return  CustomResult("Success",staff);
         }
 
         // GET: api/Staffs/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Staff>> GetStaff(int id)
+        public async Task<IActionResult> GetStaff(int id)
         {
             var staff = await _context.Staff.FirstOrDefaultAsync(s => s.Id == id);
             if (staff == null)
-                return NotFound($"Staff with    id{id} cannot be found");
+                return CustomResult($"Staff with    id{id} cannot be found",System.Net.HttpStatusCode.NotFound);
 
             var staffDto  = await _context.Staff
                                 .Join(_context.Roles, s => s.RoleId, r => r.Id, (s, r) => new { Staff = s, RoleName = r.Name })
@@ -84,7 +85,7 @@ namespace TFBackend.Controllers
                                         .ToList()
                                 })
                                 .FirstOrDefaultAsync();
-            return Ok(staffDto);
+            return CustomResult("Success",staffDto);
             
         }
 
@@ -94,9 +95,9 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutStaff(int id, StaffPutDto staffDto)
         {
             var staff = _context.Staff.FirstOrDefault(s => s.Id == id);
-            if (id != staff.Id)
+            if (staff == null)
             {
-                return BadRequest();
+                return CustomResult("Not found",System.Net.HttpStatusCode.NotFound);
             }
 
             
@@ -151,7 +152,7 @@ namespace TFBackend.Controllers
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
-                        return BadRequest(e.Message);
+                        return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
                     }
                 };
 
@@ -165,7 +166,7 @@ namespace TFBackend.Controllers
             {
                 if (!StaffExists(id))
                 {
-                    return NotFound();
+                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -173,13 +174,13 @@ namespace TFBackend.Controllers
                 }
             }
 
-            return NoContent();
+            return CustomResult("No content", System.Net.HttpStatusCode.NoContent);
         }
 
         // POST: api/Staffs
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Staff>> PostStaff(StaffPostDto staffDto)
+        public async Task<IActionResult> PostStaff(StaffPostDto staffDto)
         {
             //create new staff
             var staff = new Staff()
@@ -238,19 +239,19 @@ namespace TFBackend.Controllers
                             catch (Exception e)
                             {
                                 Console.WriteLine(e.Message);
-                                return BadRequest(e.Message);
+                                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
                             }
                         };
 
                     }
-                    return Ok(staffDto);
+                    return CustomResult("Success", staffDto);
                 }
-                return Ok(staffDto);
+                return CustomResult("Success",staffDto);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -261,13 +262,13 @@ namespace TFBackend.Controllers
             var staff = await _context.Staff.FindAsync(id);
             if (staff == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             _context.Staff.Remove(staff);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content", System.Net.HttpStatusCode.NoContent);
         }
 
         private bool StaffExists(int id)

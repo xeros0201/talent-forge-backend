@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using TFBackend.Data;
 using TFBackend.Entities.Dto.Department;
@@ -15,7 +17,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LocationsController : ControllerBase
+    public class LocationsController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -28,25 +30,25 @@ namespace TFBackend.Controllers
 
         // GET: api/Locations
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Location>>> GetLocations()
+        public async Task<IActionResult> GetLocations()
         {
             var locations = _context.Locations.Select(locations => _mapper.Map<LocationDto>(locations));
-            return Ok(locations);
+            return CustomResult("Success",locations);
         }
 
         // GET: api/Locations/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Location>> GetLocation(int id)
+        public async Task<IActionResult> GetLocation(int id)
         {
             var location = await _context.Locations.FindAsync(id);
 
             if (location == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
             var locationDto = _mapper.Map<LocationDto>(location);
 
-            return Ok(locationDto);
+            return CustomResult("Success", locationDto);
         }
 
         // PUT: api/Locations/5
@@ -55,9 +57,9 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutLocation(int id, LocationPutDto locationDto)
         {
             var location = _context.Locations.FirstOrDefault(l => l.Id == id);
-            if (id != location.Id)
+            if (location == null)
             {
-                return BadRequest();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             //_context.Entry(location).State = EntityState.Modified;
@@ -71,7 +73,7 @@ namespace TFBackend.Controllers
             {
                 if (!LocationExists(id))
                 {
-                    return NotFound();
+                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -79,15 +81,15 @@ namespace TFBackend.Controllers
                 }
             }
 
-            return NoContent();
+            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
         }
 
         // POST: api/Locations
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Location>> PostLocation(LocationPostDto locationDto)
+        public async Task<IActionResult> PostLocation(LocationPostDto locationDto)
         {
-            var location = new Location()
+            var location = new Models.Location
             {
                 Name = locationDto.Name
             };
@@ -95,12 +97,12 @@ namespace TFBackend.Controllers
             {
                 await _context.Locations.AddAsync(location);
                 var result = await _context.SaveChangesAsync();
-                return Ok(location);
+                return CustomResult("Success",location);
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -111,7 +113,7 @@ namespace TFBackend.Controllers
             var location = await _context.Locations.FindAsync(id);
             if (location == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             //change all project with corresponding locationId to null
@@ -124,14 +126,14 @@ namespace TFBackend.Controllers
                     _context.Entry(project).State= EntityState.Modified;
                     var project_result = await _context.SaveChangesAsync();
                 }
-                catch(Exception e) { return BadRequest(e.Message); }
+                catch(Exception e) { return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest); }
             }
 
             //delete location
             _context.Locations.Remove(location);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
         }
 
         private bool LocationExists(int id)
