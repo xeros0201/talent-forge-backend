@@ -12,7 +12,7 @@ namespace TFBackend.Models
         public string Active {get;set;}
         public string? LastUpdated{get;set;}
         public string? TotalProjects{get;set;}
-
+        public string password { get;set;}
         //one to many relationship
         public ICollection<BBProject>? Projects { get;set;}
 
