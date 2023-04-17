@@ -3,7 +3,7 @@ using TFBackend.Entities.Dto.Department;
 using TFBackend.Entities.Dto.Location;
 using TFBackend.Entities.Dto.Skills;
 using TFBackend.Entities.Dto.Staff;
-using TFBackend.Entities.Dto.Roll;
+using TFBackend.Entities.Dto.Role;
 using TFBackend.Models;
 
 namespace TFBackend.Helper
@@ -16,7 +16,7 @@ namespace TFBackend.Helper
             CreateMap<Department, DepartmentDto>();
             CreateMap<Location, LocationDto>();
             CreateMap<Skill,SkillsDto>();
-            CreateMap<Roll, RollsDto>();
+            CreateMap<Role, RolesDto>();
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SkillsController : ControllerBase
+    public class SkillsController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -30,23 +31,23 @@ namespace TFBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Skill>>> GetSkills()
         {
-            var skills = _context.Skills.Select(skills => _mapper.Map<SkillsDto>(skills));
+            var skills = await _context.Skills.Select(skills => _mapper.Map<SkillsDto>(skills)).ToListAsync();
             return Ok(skills);
-        }
+        }   
 
         // GET: api/Skills/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Skill>> GetSkill(int id)
+        public async Task<IActionResult> GetSkill(int id)
         {
             var skill = await _context.Skills.FindAsync(id);
 
             if (skill == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
             var skillDto = _mapper.Map<SkillsDto>(skill);
 
-            return Ok(skillDto);
+            return CustomResult("Success",skillDto);
         }
 
         // PUT: api/Skills/5
@@ -55,9 +56,9 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutSkill(int id, SkillsPutDto skillDto)
         {
             var skill = _context.Skills.FirstOrDefault(s => s.Id == id);
-            if (id != skill.Id)
+            if (skill == null)
             {
-                return BadRequest();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             //_context.Entry(skill).State = EntityState.Modified;
@@ -79,7 +80,7 @@ namespace TFBackend.Controllers
             {
                 if (!SkillExists(id))
                 {
-                    return NotFound();
+                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -87,13 +88,13 @@ namespace TFBackend.Controllers
                 }
             }
 
-            return NoContent();
+            return CustomResult("No content", System.Net.HttpStatusCode.NoContent);
         }
 
         // POST: api/Skills
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Skill>> PostSkill(SkillsPostDto skillsDto)
+        public async Task<IActionResult> PostSkill(SkillsPostDto skillsDto)
         {
             var skills = new Skill()
             {
@@ -104,12 +105,12 @@ namespace TFBackend.Controllers
             {
                 await _context.Skills.AddAsync(skills);
                 var result = await _context.SaveChangesAsync();
-                return Ok(skills);
+                return CustomResult("Success",skills);
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.Message);
-                return BadRequest(e.Message);
+                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -120,13 +121,13 @@ namespace TFBackend.Controllers
             var skill = await _context.Skills.FindAsync(id);
             if (skill == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             _context.Skills.Remove(skill);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
         }
 
         private bool SkillExists(int id)

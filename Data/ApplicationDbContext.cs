@@ -13,7 +13,7 @@ namespace TFBackend.Data
         public DbSet<Staff> Staff { get; set; }
         public DbSet<Client> Client { get; set; }
         public DbSet<BBProject> Projects { get; set; }
-        public DbSet<Roll> Rolls { get; set; }
+        public DbSet<Role> Roles { get; set; }
         public DbSet<ProjectSkill> ProjectSkills { get; set; } = null!;
         public DbSet<ProjectStaff> ProjectStaff { get; set; }
         public DbSet<StaffClient> StaffClients { get; set; }
@@ -91,15 +91,18 @@ namespace TFBackend.Data
                 .WithMany(ps => ps.StaffSkills)
                 .HasForeignKey(s => s.SkillId);
 
-            //Staff and Roll - one to many
+            //Staff and Role - one to many
             modelBuilder.Entity<Staff>()
-                .HasOne<Roll>(s =>s.Roll)
+                .HasOne<Role>(s =>s.Role)
                 .WithMany(r =>r.Staffs)
-                .HasForeignKey(p => p.RollId);
+                .HasForeignKey(p => p.RoleId);
 
 
         }
 
-
+        internal object RolesFirstOrDefaultAsync(Func<object, bool> value)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

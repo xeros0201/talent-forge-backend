@@ -1,7 +1,8 @@
 ﻿
-namespace TFBackend.Entities.Dto.Roll
+
+namespace TFBackend.Entities.Dto.Role
 {
-    public class RollsDto
+    public class RolesDto
     {
         public int Id { get; set; }
         public string Name { get; set; }

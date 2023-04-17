@@ -14,8 +14,8 @@ namespace TFBackend.Models
         public string AvailableDate{get;set;}
         
         //one to many realtionship
-        public int? RollId { get;set;}
-        public Roll? Roll { get;set;}
+        public int? RoleId { get;set;}
+        public Role? Role { get;set;}
 
         //many to many relationship
         public ICollection<StaffSkills>? StaffSkills { get;set;}

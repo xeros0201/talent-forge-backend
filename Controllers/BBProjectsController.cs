@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using CoreApiResponse;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TFBackend.Data;
@@ -17,7 +12,7 @@ namespace TFBackend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BBProjectsController : ControllerBase
+    public class BBProjectsController : BaseController
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
@@ -30,7 +25,7 @@ namespace TFBackend.Controllers
 
         // GET: api/Projects
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BBProjectDto>>> GetProjects()
+        public async Task<IActionResult> GetProjects()
         {
             var projects = from p in _context.Projects
                            select new BBProjectDto()
@@ -44,14 +39,15 @@ namespace TFBackend.Controllers
                                Location = p.Location.Name,
                                Department = p.Department.Name,
                                Active = p.Active,
-                               Skills = (List<SkillsDto>)(from k in _context.ProjectSkills.Where(k => k.ProjectId == p.Id).Select(k => k.Skill) select
+                               Skills = (List<SkillsDto>)(from k in _context.ProjectSkills.Where(k => k.ProjectId == p.Id).Select(k => k.Skill)
+                                                          select
                                            new SkillsDto()
                                            {
                                                Id = k.Id,
                                                Name = k.Name,
                                                Color = k.Color,
                                            }).ToList(),
-                               
+
                                Staff = (List<StaffDto>)(from s in _context.ProjectStaff.Where(s => s.ProjectId == p.Id).Select(s => s.Staff)
                                                         select
                                     new StaffDto()
@@ -61,35 +57,37 @@ namespace TFBackend.Controllers
                                         Picture = s.Picture,
                                         Available = s.Available,
                                         AvailableDate = s.AvailableDate,
-                                        Roll = _context.Rolls.FirstOrDefault(r => r.Id == s.RollId).Name,
+                                        Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
                                         skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
                                                                    select
                                                                    new SkillsDto()
                                                                    {
                                                                        Id = k.Id,
                                                                        Name = k.Name,
-                                                                        Color = k.Color,
+                                                                       Color = k.Color,
                                                                    }).ToList()
                                     }).ToList()
                            };
-            return Ok(projects);
+
+
+            return CustomResult("Success", projects);
         }
 
         // GET: api/Projects/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<BBProject>> GetProject(int id)
+        public async Task<IActionResult> GetProject(int id)
         {
             var project = await _context.Projects.FindAsync(id);
 
             if (project == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
             try
             {
                 //check client ID. If client Id not null, find client Name
                 string client = null;
-                if(project.ClientId != null)
+                if (project.ClientId != null)
                 {
                     client = _context.Client.FirstOrDefault(c => c.Id == project.ClientId).Name;
                 }
@@ -119,7 +117,7 @@ namespace TFBackend.Controllers
                     Location = location,
                     Department = department,
                     Active = project.Active,
-                    
+
                     Skills = (List<SkillsDto>)(from k in _context.ProjectSkills.Where(k => k.ProjectId == project.Id).Select(k => k.Skill)
                                                select
                                                new SkillsDto()
@@ -128,7 +126,8 @@ namespace TFBackend.Controllers
                                                    Name = k.Name,
                                                    Color = k.Color,
                                                }).ToList(),
-                    Staff = (List<StaffDto>)(from s in _context.ProjectStaff.Where(s => s.ProjectId == project.Id).Select(s => s.Staff) select
+                    Staff = (List<StaffDto>)(from s in _context.ProjectStaff.Where(s => s.ProjectId == project.Id).Select(s => s.Staff)
+                                             select
                          new StaffDto()
                          {
                              Id = s.Id,
@@ -136,7 +135,7 @@ namespace TFBackend.Controllers
                              Picture = s.Picture,
                              Available = s.Available,
                              AvailableDate = s.AvailableDate,
-                             Roll = _context.Rolls.FirstOrDefault(r => r.Id == s.RollId).Name,
+                             Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
                              skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
                                                         select
                                                         new SkillsDto()
@@ -146,14 +145,14 @@ namespace TFBackend.Controllers
                                                             Color = k.Color,
                                                         }).ToList()
                          }).ToList()
-                    
+
 
                 };
-                return Ok(projectDto);
+                return CustomResult("Success", projectDto);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -163,13 +162,13 @@ namespace TFBackend.Controllers
         public async Task<IActionResult> PutProject(int id, BBProjectPutDto projectDto)
         {
             var project = _context.Projects.FirstOrDefault(p => p.Id == id);
-            if (id != project.Id)
+            if (project == null)
             {
-                return BadRequest();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             //_context.Entry(project).State = EntityState.Modified;
-            if(projectDto.Name != "")
+            if (projectDto.Name != "")
             {
                 project.Name = projectDto.Name;
             }
@@ -181,39 +180,39 @@ namespace TFBackend.Controllers
             {
                 project.ClientId = projectDto.ClientId;
             }
-            if(projectDto.StartDate != "")
+            if (projectDto.StartDate != "")
             {
                 project.StartDate = projectDto.StartDate;
             }
-            if(projectDto.DepartmentId != 0)
+            if (projectDto.DepartmentId != 0)
             {
-                project.DepartmentId= projectDto.DepartmentId;
+                project.DepartmentId = projectDto.DepartmentId;
             }
-            if(projectDto.LocationId!= 0)
+            if (projectDto.LocationId != 0)
             {
                 project.LocationId = projectDto.LocationId;
             }
-            if(projectDto.EndDate != "")
+            if (projectDto.EndDate != "")
             {
                 project.EndDate = projectDto.EndDate;
             }
-            if(projectDto.Active != "")
+            if (projectDto.Active != "")
             {
                 project.Active = projectDto.Active;
             }
-            
+
             //To update many to many relationship, all related rows in database must be clear first, then add new rows            
-            if(projectDto.StaffIds != null)
+            if (projectDto.StaffIds != null)
             {
                 //clear related rows
                 var projectstaffs = _context.ProjectStaff.Where(ps => ps.ProjectId == id).ToList();
-                foreach(var projectstaff in projectstaffs)
+                foreach (var projectstaff in projectstaffs)
                 {
                     _context.ProjectStaff.Remove(projectstaff);
                 }
 
                 //add staff to projectstaff table
-                foreach(int staffId in projectDto.StaffIds)
+                foreach (int staffId in projectDto.StaffIds)
                 {
                     var projectstaff = new ProjectStaff()
                     {
@@ -229,21 +228,21 @@ namespace TFBackend.Controllers
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
-                        return BadRequest(e.Message);
+                        return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest); ;
                     }
                 };
             }
             if (projectDto.SkillsIds != null)
             {
                 //clear related rows
-                var projectskills = _context.ProjectSkills.Where(ps=>ps.ProjectId== id).ToList();
+                var projectskills = _context.ProjectSkills.Where(ps => ps.ProjectId == id).ToList();
                 foreach (var projectskill in projectskills)
                 {
                     _context.ProjectSkills.Remove(projectskill);
                 }
 
                 //add skills to projectskills table
-                foreach(int skillId in projectDto.SkillsIds)
+                foreach (int skillId in projectDto.SkillsIds)
                 {
                     var projectskill = new ProjectSkill()
                     {
@@ -256,10 +255,10 @@ namespace TFBackend.Controllers
                     {
                         await _context.ProjectSkills.AddAsync(projectskill);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
-                        return BadRequest(e.Message);
+                        return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest); ;
                     }
                 }
 
@@ -272,7 +271,7 @@ namespace TFBackend.Controllers
             {
                 if (!ProjectExists(id))
                 {
-                    return NotFound();
+                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
                 }
                 else
                 {
@@ -280,13 +279,13 @@ namespace TFBackend.Controllers
                 }
             }
 
-            return Ok();
+            return CustomResult("Update success");
         }
 
         // POST: api/Projects
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<BBProject>> PostProject(BBProjectPostDto projectDto)
+        public async Task<IActionResult> PostProject(BBProjectPostDto projectDto)
         {
             var project = new BBProject()
             {
@@ -307,35 +306,36 @@ namespace TFBackend.Controllers
             bool skillids_exist = false;
             bool skillids_count = false;
 
-            if(projectDto.SkillIds.Count > 0)
+            if (projectDto.SkillIds.Count > 0)
             {
-                skillids_count= true;
-                foreach(int skill_id in projectDto.SkillIds)
+                skillids_count = true;
+                foreach (int skill_id in projectDto.SkillIds)
                 {
-                    if(_context.Skills.Find(skill_id) != null)
+                    if (_context.Skills.Find(skill_id) != null)
                     {
-                        skillids_exist= true;
+                        skillids_exist = true;
                     }
                     else { skillids_exist = false; }
                 }
-                if(skillids_exist == false) { return BadRequest("One of the Skill Id does not exist"); }
+                if (skillids_exist == false) { return BadRequest("One of the Skill Id does not exist"); }
             }
             //project and staff
             //check staffids exist
             bool staffids_exist = false;
             bool staffids_count = false;
 
-            if(projectDto.StaffIds.Count > 0)
+            if (projectDto.StaffIds.Count > 0)
             {
-                staffids_count= true;
-                foreach(int staffId in projectDto.StaffIds)
+                staffids_count = true;
+                foreach (int staffId in projectDto.StaffIds)
                 {
-                    if(_context.Staff.Find(staffId) != null)
+                    if (_context.Staff.Find(staffId) != null)
                     {
-                        staffids_exist= true;
-                    }else { staffids_exist = false; }
+                        staffids_exist = true;
+                    }
+                    else { staffids_exist = false; }
                 }
-                if(staffids_exist == false) { return BadRequest("One of the Staff Id does not exist"); }
+                if (staffids_exist == false) { return CustomResult("One of the Staff Id does not exist", System.Net.HttpStatusCode.BadRequest); }
             }
 
             //add project, projectskill and projectstaff to database
@@ -344,12 +344,12 @@ namespace TFBackend.Controllers
             {
                 await _context.Projects.AddAsync(project);
                 var result = await _context.SaveChangesAsync();
-                if(result== 1)
+                if (result == 1)
                 {
                     //add projectskill
                     if (skillids_count && skillids_exist)
                     {
-                        foreach(int skillId in projectDto.SkillIds)
+                        foreach (int skillId in projectDto.SkillIds)
                         {
                             var projectskill = new ProjectSkill()
                             {
@@ -363,18 +363,18 @@ namespace TFBackend.Controllers
                                 await _context.ProjectSkills.AddAsync(projectskill);
                                 var result_ProjectSkill = await _context.SaveChangesAsync();
                             }
-                            catch(Exception e) 
+                            catch (Exception e)
                             {
                                 Console.WriteLine(e.Message);
-                                return BadRequest(e.Message);
+                                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
                             }
                         }
                     }
 
                     //add projectstaff
-                    if(staffids_count && staffids_exist)
+                    if (staffids_count && staffids_exist)
                     {
-                        foreach(int staffId in projectDto.StaffIds)
+                        foreach (int staffId in projectDto.StaffIds)
                         {
                             var projectstaff = new ProjectStaff()
                             {
@@ -391,17 +391,17 @@ namespace TFBackend.Controllers
                             catch (Exception e)
                             {
                                 Console.WriteLine(e.Message);
-                                return BadRequest(e.Message);
+                                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
                             }
                         }
                     }
                 }
-                return Ok(projectDto);
+                return CustomResult("Success",projectDto);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                return BadRequest(e.Message);
+                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
             }
         }
 
@@ -412,13 +412,13 @@ namespace TFBackend.Controllers
             var project = await _context.Projects.FindAsync(id);
             if (project == null)
             {
-                return NotFound();
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
             }
 
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return CustomResult("No content", System.Net.HttpStatusCode.NoContent);
         }
 
         private bool ProjectExists(int id)
