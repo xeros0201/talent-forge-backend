@@ -9,6 +9,7 @@ namespace TFBackend.Models
     {
         public int Id { get; set; }
         public string Name {get;set;}
+        public string Username { get; set; }
         public string Active {get;set;}
         public string? LastUpdated{get;set;}
         public string? TotalProjects{get;set;}

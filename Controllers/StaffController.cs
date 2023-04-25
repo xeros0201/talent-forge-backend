@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CoreApiResponse;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -179,18 +180,26 @@ namespace TFBackend.Controllers
 
         // POST: api/Staffs
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+
+
         [HttpPost]
         public async Task<IActionResult> PostStaff(StaffPostDto staffDto)
         {
             //create new staff
+
+    
+            var hashedPassword =  HashPassword.CreateHash(staffDto.Password);
+
             var staff = new Staff()
             {
                 Name = staffDto.Name,
                 Picture = staffDto.Picture,
                 RoleId = staffDto.RoleId,
                 Role = _context.Roles.FirstOrDefault(r => r.Id == staffDto.RoleId),
+                Username = staffDto.Username,
+                Password = hashedPassword,
                 Available = staffDto.Available,
-                AvailableDate = staffDto.AvailableDate,
+                AvailableDate = staffDto.AvailableDate
             };
 
             //check skillids exist
