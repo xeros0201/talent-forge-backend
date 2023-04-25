@@ -97,6 +97,11 @@ namespace TFBackend.Data
                 .WithMany(r =>r.Staffs)
                 .HasForeignKey(p => p.RoleId);
 
+            modelBuilder.Entity<Role>().HasData(
+            new Role { Id = ((int)RoleEnum.Roles.Staff), Name = "Staff"},
+            new Role { Id = ((int)RoleEnum.Roles.Manager), Name = "Manager"}
+        );
+
 
         }
 
