@@ -281,7 +281,7 @@ namespace TFBackend.Repository
                     foreach (int staffId in projectDto.StaffIds)
                     {
 
-                        if (!ProjectSkillExist(staffId))
+                        if (!ProjectStaffExist(staffId))
                         {
                             throw new Exception("One of Staff Id not found !");
                         }
