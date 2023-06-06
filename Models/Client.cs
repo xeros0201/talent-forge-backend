@@ -9,16 +9,23 @@ namespace TFBackend.Models
     {
         public int Id { get; set; }
         public string Name {get;set;}
-        public string Username { get; set; }
+        public string Picture { get;set;}
+
+        public string ClientSince { get; set; }
+
+        public int StreetNo { get; set; }
+
+        public string StreetName { get; set; }
+        public string Suburb  { get; set; }
+        public string State  { get; set; }
         public string Active {get;set;}
         public string? LastUpdated{get;set;}
-        public string? TotalProjects{get;set;}
-        public string password { get;set;}
+       
+     
         //one to many relationship
         public ICollection<BBProject>? Projects { get;set;}
 
-        //many to many relationship
-        public ICollection<StaffClient> StaffClients { get;set;}
+     
 
 
 

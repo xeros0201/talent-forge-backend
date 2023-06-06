@@ -110,7 +110,7 @@ namespace TFBackend.Controllers
         }
 
         // DELETE: api/Departments/5
-        [HttpPut("delete/{id}")]
+        [HttpDelete("delete/{id}")]
         public async Task<IActionResult> DeleteDepartment(int id)
         {
             var department = await _context.Departments.FindAsync(id);

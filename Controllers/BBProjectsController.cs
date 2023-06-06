@@ -1,12 +1,11 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using CoreApiResponse;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TFBackend.Data;
 using TFBackend.Entities.Dto.BBProject;
-using TFBackend.Entities.Dto.Skills;
-using TFBackend.Entities.Dto.Staff;
+using TFBackend.Interfaces;
 using TFBackend.Models;
+using TFBackend.Repository;
 
 namespace TFBackend.Controllers
 {
@@ -14,416 +13,114 @@ namespace TFBackend.Controllers
     [ApiController]
     public class BBProjectsController : BaseController
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProjectRepository _projectRepository;
         private readonly IMapper _mapper;
-
-        public BBProjectsController(ApplicationDbContext context, IMapper mapper)
+        public BBProjectsController(IProjectRepository projectRepository, IMapper mapper)
         {
-            _context = context;
+            _projectRepository = projectRepository;
             _mapper = mapper;
         }
 
-        // GET: api/Projects
         [HttpGet]
-        public async Task<IActionResult> GetProjects()
+        [ProducesResponseType(200, Type = typeof(IEnumerable<BBProject>))]
+        public IActionResult GetBBProjects()
         {
-            var projects = from p in _context.Projects
-                           select new BBProjectDto()
-                           {
-                               Id = p.Id,
-                               Name = p.Name,
-                               Description = p.Description,
-                               Client = p.client.Name,
-                               StartDate = p.StartDate,
-                               EndDate = p.EndDate,
-                               Location = p.Location.Name,
-                               Department = p.Department.Name,
-                               Active = p.Active,
-                               Skills = (List<SkillsDto>)(from k in _context.ProjectSkills.Where(k => k.ProjectId == p.Id).Select(k => k.Skill)
-                                                          select
-                                           new SkillsDto()
-                                           {
-                                               Id = k.Id,
-                                               Name = k.Name,
-                                               Color = k.Color,
-                                           }).ToList(),
-
-                               Staff = (List<StaffDto>)(from s in _context.ProjectStaff.Where(s => s.ProjectId == p.Id).Select(s => s.Staff)
-                                                        select
-                                    new StaffDto()
-                                    {
-                                        Id = s.Id,
-                                        Name = s.Name,
-                                        Picture = s.Picture,
-                                        Available = s.Available,
-                                        AvailableDate = s.AvailableDate,
-                                        Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
-                                        skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
-                                                                   select
-                                                                   new SkillsDto()
-                                                                   {
-                                                                       Id = k.Id,
-                                                                       Name = k.Name,
-                                                                       Color = k.Color,
-                                                                   }).ToList()
-                                    }).ToList()
-                           };
-
-
-            return CustomResult("Success", projects);
+            var projects = _mapper.Map<List<BBProjectDto>>(_projectRepository.GetBBProjects());
+            if (!ModelState.IsValid)
+                return CustomResult(ModelState, System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success",projects);
         }
-
-        // GET: api/Projects/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetProject(int id)
+        [ProducesResponseType(200, Type = typeof(BBProject))]
+        [ProducesResponseType(400)]
+        public IActionResult GetBBProject(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
-
-            if (project == null)
-            {
+            if (!_projectRepository.BBProjectExist(id)) 
                 return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
-            }
-            try
-            {
-                //check client ID. If client Id not null, find client Name
-                string client = null;
-                if (project.ClientId != null)
-                {
-                    client = _context.Client.FirstOrDefault(c => c.Id == project.ClientId).Name;
-                }
-
-                //check department ID. If department Id not null, find department Name
-                string department = null;
-                if (project.DepartmentId != null)
-                {
-                    department = _context.Departments.FirstOrDefault(d => d.Id == project.DepartmentId).Name;
-                }
-                //check location ID. If location Id not null, find location Name
-                string location = null;
-                if (project.LocationId != null)
-                {
-                    location = _context.Locations.FirstOrDefault(l => l.Id == project.LocationId).Name;
-                }
 
 
-                var projectDto = new BBProjectDto()
-                {
-                    Id = project.Id,
-                    Name = project.Name,
-                    Description = project.Description,
-                    Client = client,
-                    StartDate = project.StartDate,
-                    EndDate = project.EndDate,
-                    Location = location,
-                    Department = department,
-                    Active = project.Active,
-
-                    Skills = (List<SkillsDto>)(from k in _context.ProjectSkills.Where(k => k.ProjectId == project.Id).Select(k => k.Skill)
-                                               select
-                                               new SkillsDto()
-                                               {
-                                                   Id = k.Id,
-                                                   Name = k.Name,
-                                                   Color = k.Color,
-                                               }).ToList(),
-                    Staff = (List<StaffDto>)(from s in _context.ProjectStaff.Where(s => s.ProjectId == project.Id).Select(s => s.Staff)
-                                             select
-                         new StaffDto()
-                         {
-                             Id = s.Id,
-                             Name = s.Name,
-                             Picture = s.Picture,
-                             Available = s.Available,
-                             AvailableDate = s.AvailableDate,
-                             Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
-                             skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
-                                                        select
-                                                        new SkillsDto()
-                                                        {
-                                                            Id = k.Id,
-                                                            Name = k.Name,
-                                                            Color = k.Color,
-                                                        }).ToList()
-                         }).ToList()
-
-
-                };
-                return CustomResult("Success", projectDto);
-            }
-            catch (Exception e)
-            {
-                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
-            }
+            var project = _mapper.Map<BBProjectDto>(_projectRepository.GetBBProject(id));
+            if (!ModelState.IsValid)
+                return CustomResult(ModelState, System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success", project);
         }
 
-        // PUT: api/Projects/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProject(int id, BBProjectPutDto projectDto)
+        [HttpGet("agendar/{id}")]
+        [ProducesResponseType(200, Type = typeof(BBProject))]
+        [ProducesResponseType(400)]
+        public IActionResult GetBBProjectWitchCalender(int id)
         {
-            var project = _context.Projects.FirstOrDefault(p => p.Id == id);
-            if (project == null)
-            {
+            if (!_projectRepository.BBProjectExist(id))
                 return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
-            }
 
-            //_context.Entry(project).State = EntityState.Modified;
-            if (projectDto.Name != "")
-            {
-                project.Name = projectDto.Name;
-            }
-            if (projectDto.Description != "")
-            {
-                project.Description = projectDto.Description;
-            }
-            if (projectDto.ClientId != 0)
-            {
-                project.ClientId = projectDto.ClientId;
-            }
-            if (projectDto.StartDate != "")
-            {
-                project.StartDate = projectDto.StartDate;
-            }
-            if (projectDto.DepartmentId != 0)
-            {
-                project.DepartmentId = projectDto.DepartmentId;
-            }
-            if (projectDto.LocationId != 0)
-            {
-                project.LocationId = projectDto.LocationId;
-            }
-            if (projectDto.EndDate != "")
-            {
-                project.EndDate = projectDto.EndDate;
-            }
-            if (projectDto.Active != "")
-            {
-                project.Active = projectDto.Active;
-            }
 
-            //To update many to many relationship, all related rows in database must be clear first, then add new rows            
-            if (projectDto.StaffIds != null)
-            {
-                //clear related rows
-                var projectstaffs = _context.ProjectStaff.Where(ps => ps.ProjectId == id).ToList();
-                foreach (var projectstaff in projectstaffs)
-                {
-                    _context.ProjectStaff.Remove(projectstaff);
-                }
-
-                //add staff to projectstaff table
-                foreach (int staffId in projectDto.StaffIds)
-                {
-                    var projectstaff = new ProjectStaff()
-                    {
-                        ProjectId = project.Id,
-                        Project = _context.Projects.FirstOrDefault(p => p.Id == project.Id),
-                        StaffId = staffId,
-                        Staff = _context.Staff.FirstOrDefault(s => s.Id == staffId)
-                    };
-                    try
-                    {
-                        await _context.ProjectStaff.AddAsync(projectstaff);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                        return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest); ;
-                    }
-                };
-            }
-            if (projectDto.SkillsIds != null)
-            {
-                //clear related rows
-                var projectskills = _context.ProjectSkills.Where(ps => ps.ProjectId == id).ToList();
-                foreach (var projectskill in projectskills)
-                {
-                    _context.ProjectSkills.Remove(projectskill);
-                }
-
-                //add skills to projectskills table
-                foreach (int skillId in projectDto.SkillsIds)
-                {
-                    var projectskill = new ProjectSkill()
-                    {
-                        ProjectId = project.Id,
-                        Project = _context.Projects.FirstOrDefault(p => p.Id == project.Id),
-                        SkillId = skillId,
-                        Skill = _context.Skills.FirstOrDefault(s => s.Id == skillId)
-                    };
-                    try
-                    {
-                        await _context.ProjectSkills.AddAsync(projectskill);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                        return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest); ;
-                    }
-                }
-
-            }
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProjectExists(id))
-                {
-                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CustomResult("Update success");
+            var project = _mapper.Map<BBProjectCalendarDto>(_projectRepository.GetBBProjectWithAgenda(id));
+            if (!ModelState.IsValid)
+                return CustomResult(ModelState, System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success", project);
         }
 
-        // POST: api/Projects
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> PostProject(BBProjectPostDto projectDto)
+        [ProducesResponseType(200, Type = typeof(BBProject))]
+        public IActionResult CreateBBProject(BBProjectPostDto projectDto)
         {
-            var project = new BBProject()
+            if(projectDto == null)
             {
-                Name = projectDto.Name,
-                Description = projectDto.Description,
-                ClientId = projectDto.ClientId,
-                StartDate = projectDto.StartDate,
-                DepartmentId = projectDto.DepartmentId,
-                LocationId = projectDto.LocationId,
-                EndDate = projectDto.EndDate,
-                Active = projectDto.Active
-
-            };
-
-
-            //project and skills
-            //check skillids exist
-            bool skillids_exist = false;
-            bool skillids_count = false;
-
-            if (projectDto.SkillIds.Count > 0)
-            {
-                skillids_count = true;
-                foreach (int skill_id in projectDto.SkillIds)
-                {
-                    if (_context.Skills.Find(skill_id) != null)
-                    {
-                        skillids_exist = true;
-                    }
-                    else { skillids_exist = false; }
-                }
-                if (skillids_exist == false) { return BadRequest("One of the Skill Id does not exist"); }
+                return CustomResult("Bad request",System.Net.HttpStatusCode.BadRequest);
             }
-            //project and staff
-            //check staffids exist
-            bool staffids_exist = false;
-            bool staffids_count = false;
+            var skillsCheck = _projectRepository.CheckProjectSkills(projectDto.SkillIds);
+            var staffCheck = _projectRepository.CheckProjectStaffs(projectDto.StaffIds);
+            if (!skillsCheck)
+                return CustomResult("One of the Skill Id does not exist", System.Net.HttpStatusCode.BadRequest);
+            if(!staffCheck)
+                return CustomResult("One of the Staff Id does not exist", System.Net.HttpStatusCode.BadRequest);
+            BBProject bBProject;
+            var createProject = _projectRepository.CreateProject(projectDto,out bBProject);
+            if (!createProject)
+                return CustomResult("Create project failed", System.Net.HttpStatusCode.BadRequest);
+            
+            return CustomResult("Success",  _mapper.Map<BBProjectDto>(bBProject));
 
-            if (projectDto.StaffIds.Count > 0)
-            {
-                staffids_count = true;
-                foreach (int staffId in projectDto.StaffIds)
-                {
-                    if (_context.Staff.Find(staffId) != null)
-                    {
-                        staffids_exist = true;
-                    }
-                    else { staffids_exist = false; }
-                }
-                if (staffids_exist == false) { return CustomResult("One of the Staff Id does not exist", System.Net.HttpStatusCode.BadRequest); }
+        }
+        [HttpPut]
+        public IActionResult UpdateProject( int id ,BBProjectPutDto projectUpdateDto)
+        {
+            if (!_projectRepository.BBProjectExist(id)){
+                return CustomResult("No found", System.Net.HttpStatusCode.NotFound);
             }
 
-            //add project, projectskill and projectstaff to database
-
-            try
+            string err;
+  
+                
+            if (!_projectRepository.UpdateProject(id, projectUpdateDto, out err))
             {
-                await _context.Projects.AddAsync(project);
-                var result = await _context.SaveChangesAsync();
-                if (result == 1)
-                {
-                    //add projectskill
-                    if (skillids_count && skillids_exist)
-                    {
-                        foreach (int skillId in projectDto.SkillIds)
-                        {
-                            var projectskill = new ProjectSkill()
-                            {
-                                SkillId = skillId,
-                                Skill = _context.Skills.FirstOrDefault(s => s.Id == skillId),
-                                ProjectId = project.Id,
-                                Project = _context.Projects.FirstOrDefault(p => p.Id == project.Id)
-                            };
-                            try
-                            {
-                                await _context.ProjectSkills.AddAsync(projectskill);
-                                var result_ProjectSkill = await _context.SaveChangesAsync();
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.Message);
-                                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
-                            }
-                        }
-                    }
+                return CustomResult(err, System.Net.HttpStatusCode.BadRequest);
+            }
 
-                    //add projectstaff
-                    if (staffids_count && staffids_exist)
-                    {
-                        foreach (int staffId in projectDto.StaffIds)
-                        {
-                            var projectstaff = new ProjectStaff()
-                            {
-                                StaffId = staffId,
-                                Staff = _context.Staff.FirstOrDefault(s => s.Id == staffId),
-                                ProjectId = project.Id,
-                                Project = _context.Projects.FirstOrDefault(p => p.Id == project.Id)
-                            };
-                            try
-                            {
-                                await _context.ProjectStaff.AddAsync(projectstaff);
-                                var result_ProjectStaff = await _context.SaveChangesAsync();
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.Message);
-                                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
-                            }
-                        }
-                    }
-                }
-                return CustomResult("Success",projectDto);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
-            }
+            return CustomResult(System.Net.HttpStatusCode.NoContent);
+                
         }
 
-        // DELETE: api/Projects/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProject(int id)
+        [HttpDelete]
+        public IActionResult DeleteProject( int id )
         {
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
+            if(id == null)
             {
-                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
+                return CustomResult("No id !", System.Net.HttpStatusCode.BadRequest);
+
             }
 
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
+            var project = _projectRepository.GetBBProject(id);
+            if(project == null)
+            {
+                return CustomResult("Project not found !", System.Net.HttpStatusCode.BadRequest);
+            }
 
-            return CustomResult("No content", System.Net.HttpStatusCode.NoContent);
-        }
-
-        private bool ProjectExists(int id)
-        {
-            return _context.Projects.Any(e => e.Id == id);
+            if (!_projectRepository.DeleteProject(project))
+            {
+                return CustomResult("Delete failed something went wrong !");
+            }
+            return CustomResult(System.Net.HttpStatusCode.NoContent);
         }
     }
 }

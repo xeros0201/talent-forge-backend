@@ -3,10 +3,13 @@ using CoreApiResponse;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TFBackend.Data;
+using TFBackend.Entities.Dto.BBProject;
 using TFBackend.Entities.Dto.Clients;
 using TFBackend.Entities.Dto.Skills;
 using TFBackend.Entities.Dto.Staff;
+using TFBackend.Interfaces;
 using TFBackend.Models;
+using TFBackend.Repository;
 
 namespace TFBackend.Controllers
 {
@@ -14,282 +17,100 @@ namespace TFBackend.Controllers
     [ApiController]
     public class ClientsController : BaseController
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IClientRepositorycs _clientRepositorycs;
         private readonly IMapper _mapper;
 
-        public ClientsController(ApplicationDbContext context, IMapper mapper)
+        public ClientsController(IClientRepositorycs clientRepositorycs, IMapper mapper)
         {
-            _context = context;
+            _clientRepositorycs = clientRepositorycs;
             _mapper = mapper;
         }
 
         // GET: api/Clients
         [HttpGet]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Client>))] 
         public async Task<IActionResult> GetClient()
         {
-            
-            
-            var client = from c in _context.Client
-                         select new ClientDto
-                         {
-                             Id = c.Id,
-                             Name = c.Name,
-                             Active = c.Active,
-                             LastUpdated = c.LastUpdated,
-                             TotalProjects = _context.Projects.Where(p=>p.ClientId == c.Id).Select(p=>p.Id).Count().ToString(),
-                             Staff = (List<StaffDto>)(from s in _context.StaffClients.Where(s => s.ClientId == c.Id).Select(s => s.Staff) select
-                                    new StaffDto()
-                                    {
-                                        Id = s.Id,
-                                        Name = s.Name,
-                                        Picture = s.Picture,
-                                        Available = s.Available,
-                                        AvailableDate = s.AvailableDate,
-                                        Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
-                                        skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill)
-                                                                   select
-                                                                   new SkillsDto()
-                                                                   {
-                                                                       Id = k.Id,
-                                                                       Name = k.Name,
-                                                                       Color = k.Color,
-                                                                   }).ToList()
-                                    }).ToList()
-                         };
-            
-            return CustomResult("Success",client);
+
+            var Clients = _mapper.Map<List<ClientDto>>( _clientRepositorycs.GetClients());
+
+
+            if (!ModelState.IsValid)
+                return CustomResult(ModelState, System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success", Clients);
         }
-
-        // GET: api/Clients/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetClient(int id)
-        {
-            var client = await _context.Client.FindAsync(id);
-
-            if (client == null)
-            {
-                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
-            }
-
-            List<StaffDto> staff = (List<StaffDto>)(from s in _context.StaffClients.Where(s => s.ClientId == id).Select(s => s.Staff) select
-                new StaffDto()
-                {
-                    Id = s.Id,
-                    Name = s.Name,
-                    Picture= s.Picture,
-                    Available= s.Available,
-                    AvailableDate= s.AvailableDate,
-                    Role = _context.Roles.FirstOrDefault(r => r.Id == s.RoleId).Name,
-                    skills = (List<SkillsDto>)(from k in _context.StaffSkills.Where(k => k.StaffId == s.Id).Select(k => k.Skill) select
-                                               new SkillsDto()
-                                               {
-                                                   Id = k.Id,
-                                                   Name = k.Name,
-                                                   Color = k.Color,
-                                               }).ToList()
-                }).ToList();
-            //get StaffClient table for staff IDs
-
-            var clientDto = new ClientDto()
-            {
-                Id = client.Id,
-                Name = client.Name,
-                Active = client.Active,
-                LastUpdated = client.LastUpdated,
-                TotalProjects = client.TotalProjects,
-                Staff = staff
-            };
-
-            return CustomResult("Success",clientDto);
-        }
-
-        // PUT: api/Clients/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutClient(int id, ClientPutDto clientDto)
-        {
-            var client = _context.Client.FirstOrDefault(c => c.Id == id);
-            if (client == null)
-            {
-                return CustomResult("Not found",System.Net.HttpStatusCode.NotFound);
-            }
-
-            //_context.Entry(client).State = EntityState.Modified;
-            if(clientDto.Name != "")
-            {
-                client.Name = clientDto.Name;
-            }
-            if (clientDto.Active != "")
-            {
-                client.Active = clientDto.Active;
-            }
-            if (clientDto.LastUpdated != "")
-            {
-                client.LastUpdated = clientDto.LastUpdated;
-            }
-
-            //To update many to many relationship, all related rows in database must be clear first, then add new rows
-            if (clientDto.StaffIds.Count > 0)
-            {
-                //clear related rows
-                var staffclients = _context.StaffClients.Where(sc => sc.ClientId == id).ToList();
-                foreach (var staffclient in staffclients)
-                {
-                    _context.StaffClients.Remove(staffclient);
-                }
-
-                //add staff to staffclient table
-                foreach (int staff_id in clientDto.StaffIds)
-                {
-                    var staffclient = new StaffClient()
-                    {
-                        ClientId = id,
-                        Client = _context.Client.FirstOrDefault(c => c.Id == client.Id),
-                        StaffId = staff_id,
-                        Staff = _context.Staff.FirstOrDefault(s => s.Id == staff_id)
-                    };
-                    try
-                    {
-                        await _context.StaffClients.AddAsync(staffclient);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e.Message);
-                        return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
-                    }
-                };
-            }
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClientExists(id))
-                {
-                    return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Clients
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<IActionResult> PostClient(ClientPostDto clientDto)
+        [ProducesResponseType(200, Type = typeof(Client))]
+        public IActionResult createClient(ClientPostDto clientDto)
         {
-            //create new client
-            var client = new Client()
+            if (clientDto == null)
             {
-                Name = clientDto.Name,
-                Active = clientDto.Active,
-                LastUpdated= clientDto.LastUpdated,
-            };
+                return CustomResult("Bad request", System.Net.HttpStatusCode.BadRequest);
+            }
+            
+            var createProject = _clientRepositorycs.CreateClient(clientDto);
+            if (!createProject)
+                return CustomResult("Create project failed", System.Net.HttpStatusCode.BadRequest);
 
-            //check staffids exist
-            bool staffids_exist = false;
-            bool staffids_count = false;
+            return CustomResult("Success");
 
-            //check if staff assign to new client
-            if (clientDto.StaffIds.Count() > 0)
+        }
+        [HttpGet("{id}")]
+        [ProducesResponseType(200, Type = typeof(Client))]
+        [ProducesResponseType(400)]
+        public IActionResult GetBBProject(int id)
+        {
+            if (!_clientRepositorycs.clientExist(id))
+                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
+
+
+            var client = _mapper.Map<ClientDto>(_clientRepositorycs.GetClient(id));
+            if (!ModelState.IsValid)
+                return CustomResult(ModelState, System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success", client);
+        }
+        [HttpPut]
+        public IActionResult UpdateProject(int id, ClientPutDto clientDto)
+        {
+            if (!_clientRepositorycs.clientExist(id))
             {
-                staffids_count = true;
-                
-                //loop through each staff id and check if id exists
-                foreach(int id in clientDto.StaffIds)
-                {
-                    if(_context.Staff.Find(id)!= null)
-                    {
-                        staffids_exist= true;
-                    }
-                    else
-                    {
-                        staffids_exist = false;
-                    }
-                }
-                if (staffids_exist == false) { return BadRequest("One of the Staff Id does not exist"); }
+                return CustomResult("No found", System.Net.HttpStatusCode.NotFound);
+            }
+ 
+
+
+            if (!_clientRepositorycs.UpdateClient(clientDto,id))
+            {
+                return CustomResult("Something went wrong !", System.Net.HttpStatusCode.BadRequest);
             }
 
-            //add staff to staffclient
-            try
-            {
-                await _context.Client.AddAsync(client);
-                var result = await _context.SaveChangesAsync();
-                if(result == 1)
-                {
-                    if(staffids_exist && staffids_count)
-                    {
-                        foreach(int staff_id in clientDto.StaffIds)
-                        {
-                            var staffclient = new StaffClient()
-                            {
-                                ClientId = client.Id,
-                                Client = _context.Client.FirstOrDefault(c => c.Id == client.Id),
-                                StaffId = staff_id,
-                                Staff = _context.Staff.FirstOrDefault(s => s.Id == staff_id),
-                            };
-                            try
-                            {
-                                await _context.StaffClients.AddAsync(staffclient);
-                                var result_staffskill = await _context.SaveChangesAsync();
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.Message);
-                                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
-                            }
-                        }
-                    }
-
-                }
-                return Ok(clientDto);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
-            }
+            return CustomResult(System.Net.HttpStatusCode.NoContent);
 
         }
 
-        // DELETE: api/Clients/5
-        [HttpPut("delete/{id}")]
-        public async Task<IActionResult> DeleteClient(int id)
+
+        [HttpDelete]
+        public IActionResult DeleteClient(int id)
         {
-            var client = await _context.Client.FindAsync(id);
+            if (id == null)
+            {
+                return CustomResult("No id !", System.Net.HttpStatusCode.BadRequest);
+
+            }
+
+            var client = _clientRepositorycs.GetClient(id);
             if (client == null)
             {
-                return CustomResult("Not found", System.Net.HttpStatusCode.NotFound);
+                return CustomResult("Project not found !", System.Net.HttpStatusCode.BadRequest);
             }
-            //change all project with corresponding clientId to null
-            List<BBProject> project_list = _context.Projects.Where(p=>p.ClientId == id).ToList();
-            foreach (var project in project_list)
+
+            if (!_clientRepositorycs.DeleteClient(client))
             {
-                project.ClientId = null;
-                try
-                {
-                    _context.Entry(project).State = EntityState.Modified;
-                    var project_result = await _context.SaveChangesAsync();
-                }
-                catch (Exception e) { return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest); }
+                return CustomResult("Delete failed something went wrong !");
             }
-
-            //delete client
-            _context.Client.Remove(client);
-            await _context.SaveChangesAsync();
-
-            return CustomResult("No content",System.Net.HttpStatusCode.NoContent);
-        }
-
-        private bool ClientExists(int id)
-        {
-            return _context.Client.Any(e => e.Id == id);
+            return CustomResult(System.Net.HttpStatusCode.NoContent);
         }
     }
+
+
 }

@@ -5,13 +5,16 @@ namespace TFBackend.Models
 {
     public class ProjectStaff
     {
-        //[Key]
+        //[Key]\
+ 
         public int ProjectId { get; set; }
 
         public BBProject Project { get; set; }
 
         public int StaffId { get; set; }
         public Staff Staff { get; set;}
+
+     
 
     }
 }

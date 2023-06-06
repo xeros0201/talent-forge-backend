@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TFBackend", "TFBackend.csproj", "{53FBC7F7-01F6-46DE-A042-AABF477963EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TFBackend", "C:\TF\TFBackend\TFBackend.csproj", "{53FBC7F7-01F6-46DE-A042-AABF477963EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,8 +13,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Debug|x86.ActiveCfg = Debug|Any CPU
 		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Debug|x86.Build.0 = Debug|Any CPU
-		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Release|x86.ActiveCfg = Release|x86
-		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Release|x86.Build.0 = Release|x86
+		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Release|x86.ActiveCfg = Debug|Any CPU
+		{53FBC7F7-01F6-46DE-A042-AABF477963EA}.Release|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

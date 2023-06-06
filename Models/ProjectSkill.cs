@@ -6,7 +6,7 @@ namespace TFBackend.Models
     public class ProjectSkill
     {
         //[Key]
-
+     
         public int ProjectId { get; set; }
         public BBProject Project { get; set; }
         

@@ -2,7 +2,7 @@
   "profiles": {
     "TFBackend": {
       "commandName": "Project",
-      "workingDirectory": "D:\\TF_2.0\\TFBackend",
+      "workingDirectory": "C:\\TF\\TFBackend",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {

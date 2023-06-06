@@ -35,24 +35,41 @@ namespace TFBackend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStaff()
         {
-            //var staff = _context.Staff.Select(staff => _mapper.Map<StaffDto>(staff));
-           
-            var staff = await _context.Staff
-                   .Join(_context.Roles, s => s.RoleId, r => r.Id, (s, r) => new { Staff = s, Role = r })
-                   .GroupJoin(_context.StaffSkills, sr => sr.Staff.Id, sk => sk.StaffId, (sr, ssk) => new { StaffRole = sr, StaffSkills = ssk })
-                   .SelectMany(srs => srs.StaffSkills.DefaultIfEmpty(), (srs, sk) => new { StaffRoleSkills = srs, Skill = sk != null ? sk.Skill : null })
-                   .Select(s => new StaffDto
-                   {
-                       Id = s.StaffRoleSkills.StaffRole.Staff.Id,
-                       Name = s.StaffRoleSkills.StaffRole.Staff.Name,
-                       Picture = s.StaffRoleSkills.StaffRole.Staff.Picture,
-                       Available = s.StaffRoleSkills.StaffRole.Staff.Available,
-                       AvailableDate = s.StaffRoleSkills.StaffRole.Staff.AvailableDate,
-                       Role = s.StaffRoleSkills.StaffRole.Role.Name ?? "",
-                       skills = new List<SkillsDto> { new SkillsDto { Id = s.Skill.Id, Name = s.Skill.Name, Color = s.Skill.Color } }
-                   })
-                   .ToListAsync();
+ 
+
+            var staff = _mapper.Map< List<StaffDto>>( _context.Staff
+                    .Include(s => s.Role)
+                    .Include( s => s.StaffSkills)
+                        .ThenInclude(st => st.Skill)
+                     .Include(s => s.ProjectStaff)
+                        .ThenInclude(st => st.Project).ToList());
+                     
+            if (staff == null)
+            {
+                List<StaffDto> nullStaff = new List<StaffDto>();
+                return CustomResult("Success", nullStaff);
+            }
             return  CustomResult("Success",staff);
+        }
+
+        [HttpGet("agendar/all")]
+        public async Task<IActionResult> GetStaffsWithAgendar()
+        {
+
+
+            var staff = _mapper.Map<List<StaffOnlyCalendarDto>>(_context.Staff
+                    .Include(s => s.Role)
+                    .Include(s => s.CalendarProjectStaff).ThenInclude(ss => ss.Project)
+                    .Include(s => s.StaffSkills)
+                        .ThenInclude(st => st.Skill)
+                     .ToList());
+
+            if (staff == null)
+            {
+                List<StaffDto> nullStaff = new List<StaffDto>();
+                return CustomResult("Success", nullStaff);
+            }
+            return CustomResult("Success", staff);
         }
 
         // GET: api/Staffs/5
@@ -63,31 +80,32 @@ namespace TFBackend.Controllers
             if (staff == null)
                 return CustomResult($"Staff with    id{id} cannot be found",System.Net.HttpStatusCode.NotFound);
 
-            var staffDto  = await _context.Staff
-                                .Join(_context.Roles, s => s.RoleId, r => r.Id, (s, r) => new { Staff = s, RoleName = r.Name })
-                                .Where(sr => sr.Staff.Id == id)
-                                .Select(sr => new StaffDto
-                                {
-                                    Id = sr.Staff.Id,
-                                    Name = sr.Staff.Name,
-                                    Picture = sr.Staff.Picture,
-                                    Available = sr.Staff.Available,
-                                    AvailableDate = sr.Staff.AvailableDate,
-                                    Role = sr.RoleName,
-                                    skills = _context.StaffSkills
-                                        .Where(ss => ss.StaffId == id)
-                                        .Select(ss => ss.Skill)
-                                        .Select(k => new SkillsDto
-                                        {
-                                            Id = k.Id,
-                                            Name = k.Name,
-                                            Color = k.Color
-                                        })
-                                        .ToList()
-                                })
-                                .FirstOrDefaultAsync();
+            var staffDto  =  _mapper.Map<StaffDto>(_context.Staff
+                    .Include(s => s.Role)
+                    .Include(s => s.StaffSkills)
+                        .ThenInclude(st => st.Skill)
+                     .Include(s => s.ProjectStaff)
+                        .ThenInclude(st => st.Project).Where(s =>s.Id == id)
+                                .FirstOrDefault());
             return CustomResult("Success",staffDto);
             
+        }
+        [HttpGet("agendar/signle/{id}")]
+        public async Task<IActionResult> GetStaffWithAgenda(int id)
+        {
+            var staff = await _context.Staff.FirstOrDefaultAsync(s => s.Id == id);
+            if (staff == null)
+                return CustomResult($"Staff with    id{id} cannot be found", System.Net.HttpStatusCode.NotFound);
+
+            var staffDto = _mapper.Map<StaffOnlyCalendarDto>(_context.Staff
+                    .Include(s => s.Role)
+                     .Include(s => s.CalendarProjectStaff).ThenInclude(ss => ss.Project)
+                    .Include(s => s.StaffSkills)
+                        .ThenInclude(st => st.Skill)
+                     .Where(s => s.Id == id)
+                                .FirstOrDefault());
+            return CustomResult("Success", staffDto);
+
         }
 
         // PUT: api/Staffs/5

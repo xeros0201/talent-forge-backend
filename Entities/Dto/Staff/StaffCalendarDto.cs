@@ -1,12 +1,11 @@
-﻿using TFBackend.Entities.Dto.Skills;
-using TFBackend.Models;
-using TFBackend.Entities.Dto.Role;
-using TFBackend.Entities.Dto.BBProject;
+﻿using TFBackend.Entities.Dto.BBProject;
 using TFBackend.Entities.Dto.CalendarProjectStaff;
+using TFBackend.Entities.Dto.Role;
+using TFBackend.Entities.Dto.Skills;
 
 namespace TFBackend.Entities.Dto.Staff
 {
-    public class StaffDto
+    public class StaffCalendarDto
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -22,10 +21,7 @@ namespace TFBackend.Entities.Dto.Staff
         //many to many relationship
 
         public List<SkillsDto>? StaffSkills { get; set; }
-
-        public List<BBProjectDto>? ProjectStaff { get; set; }
-
-        public List<CalendarProjectStaffDto>? CalendarProjectStaff { get; set;}
-
+ 
+ 
     }
 }

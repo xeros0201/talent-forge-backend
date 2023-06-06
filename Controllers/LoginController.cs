@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using TFBackend.Data;
 using TFBackend.Entities.Dto.Login;
+using TFBackend.Entities.Dto.Role;
 using TFBackend.Entities.Dto.Staff;
 using TFBackend.Models;
 using JwtRegisteredClaimNames = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
@@ -44,7 +45,7 @@ namespace TFBackend.Controllers
             {
                 return CustomResult("Username or password incorrect", System.Net.HttpStatusCode.BadRequest);
             }
-            var role = await _context.Roles.FirstOrDefaultAsync(e => e.Id == user.RoleId);
+            
 
 
             return CustomResult("Success", new LoginResponse
@@ -56,7 +57,7 @@ namespace TFBackend.Controllers
                     Available = user.Available,
                     Id = user.Id,
                     Picture = user.Picture,
-                    Role = role.Name,
+                    Role = _mapper.Map<RolesDto> (_context.Roles.FirstOrDefault(e => e.Id == user.RoleId)),
                     AvailableDate = user.AvailableDate,
                 },
                 accessToken = GetToken(user),

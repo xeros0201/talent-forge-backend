@@ -11,6 +11,7 @@ namespace TFBackend.Entities.Dto.BBProject
         public string StartDate { get; set; }
         public int DepartmentId { get; set; }
         public int LocationId { get; set; }
+        public string Color { get; set; }
         public string EndDate { get; set; }
         public string Active { get; set; }
         public List<int>? SkillsIds { get; set; }
