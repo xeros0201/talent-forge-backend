@@ -24,6 +24,7 @@ namespace TFBackend.Models
 
         public ICollection<CalendarProjectStaff>? CalendarProjectStaff { get; set; }
 
+        public ICollection<StaffCert>? StaffCerts { get;set;}
         public ICollection<BBProject>? Projects { get; set; }
     }
 }

@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using TFBackend.Data;
+using TFBackend.Entities.Dto.Certs;
 using TFBackend.Entities.Dto.Role;
 using TFBackend.Entities.Dto.Skills;
 using TFBackend.Entities.Dto.Staff;
@@ -88,7 +89,6 @@ namespace TFBackend.Controllers
                         .ThenInclude(st => st.Project).Where(s =>s.Id == id)
                                 .FirstOrDefault());
             return CustomResult("Success",staffDto);
-            
         }
         [HttpGet("agendar/signle/{id}")]
         public async Task<IActionResult> GetStaffWithAgenda(int id)
@@ -105,7 +105,6 @@ namespace TFBackend.Controllers
                      .Where(s => s.Id == id)
                                 .FirstOrDefault());
             return CustomResult("Success", staffDto);
-
         }
 
         // PUT: api/Staffs/5
@@ -143,6 +142,42 @@ namespace TFBackend.Controllers
             }
             
             //To update many to many relationship, all related rows in database must be clear first, then add new rows
+
+            if(staffDto.CertIds.Count > 0)
+            {
+                var staffCerts = _context.StaffCerts.Where(sc => sc.StaffId == id).ToList();
+                foreach (var cert in staffCerts)
+                {
+                    _context.StaffCerts.Remove(cert);
+                }
+                foreach (StaffCertDto cert in staffDto.CertIds)
+                {
+                    var staffskill = new StaffCert()
+                    {
+                        StaffId = staff.Id,
+                        Staff = _context.Staff.FirstOrDefault(s => s.Id == staff.Id),
+                        CertId = cert.CertId,
+                        Cert = _context.Certs.FirstOrDefault(k => k.Id == cert.CertId),
+                        AcquiredDate = cert.AcquiredDate,
+                        CertLink = cert.CertLink,
+                        ExpiredDate = cert.ExpiredDate,
+                        InterNationalId = cert.InterNationalId,
+                        IssuingOrganisation = cert.IssuingOrganisation,
+                        RenewalDate = cert.RenewalDate
+                    };
+                    try
+                    {
+                        await _context.StaffCerts.AddAsync(staffskill);
+                        var result_staffskill = await _context.SaveChangesAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
+                    }
+                }
+
+                }
             if (staffDto.SkillIds.Count > 0)
             {
                 //clear related rows
@@ -223,6 +258,25 @@ namespace TFBackend.Controllers
             //check skillids exist
             bool skillids_exist = false;
             bool skillids_count = false;
+
+            bool certids_exist = false;
+            bool certids_count = false;
+
+
+            if (staffDto.CertIds.Count > 0)
+            {
+                certids_count = true;
+                foreach (StaffCertDto Cert in staffDto.CertIds)
+                {
+                    if (_context.Certs.Find(Cert.CertId) != null)
+                    {
+                        certids_exist = true;
+                    }
+                    else { certids_exist = false; }
+                }
+                if (certids_exist == false) { return BadRequest("One of the Cert  Id does not exist"); }
+            }
+
             if (staffDto.SkillIds.Count > 0)
             {
                 skillids_count = true;
@@ -243,10 +297,40 @@ namespace TFBackend.Controllers
 
                 await _context.Staff.AddAsync(staff);
                 var result = await _context.SaveChangesAsync();
-
+               
                 //add to mamy-to-mamy table: StaffSkills
                 if (result == 1)
                 {
+                    if (certids_count && certids_exist)
+                    {
+                        foreach (StaffCertDto cert in staffDto.CertIds)
+                        {
+                            var staffskill = new StaffCert()
+                            {
+                                StaffId = staff.Id,
+                                Staff = _context.Staff.FirstOrDefault(s => s.Id == staff.Id),
+                                CertId = cert.CertId,
+                                Cert = _context.Certs.FirstOrDefault(k => k.Id == cert.CertId),
+                                AcquiredDate = cert.AcquiredDate,
+                                CertLink = cert.CertLink,
+                                ExpiredDate = cert.ExpiredDate,
+                                InterNationalId = cert.InterNationalId, 
+                                IssuingOrganisation = cert.IssuingOrganisation,
+                                RenewalDate = cert.RenewalDate
+                            };
+                            try
+                            {
+                                await _context.StaffCerts.AddAsync(staffskill);
+                                var result_staffskill = await _context.SaveChangesAsync();
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
+                            }
+                        };
+
+                    }
                     if (skillids_count && skillids_exist)
                     {
                         foreach (int skill_id in staffDto.SkillIds)
@@ -266,7 +350,7 @@ namespace TFBackend.Controllers
                             catch (Exception e)
                             {
                                 Console.WriteLine(e.Message);
-                                return CustomResult(e.Message,System.Net.HttpStatusCode.BadRequest);
+                                return CustomResult(e.Message, System.Net.HttpStatusCode.BadRequest);
                             }
                         };
 

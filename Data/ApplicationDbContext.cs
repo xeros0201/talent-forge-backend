@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Microsoft.EntityFrameworkCore;
-using TFBackend.Migrations;
 using TFBackend.Models;
 
 namespace TFBackend.Data
@@ -19,7 +18,11 @@ namespace TFBackend.Data
         public DbSet<ProjectSkill> ProjectSkills { get; set; } = null!;
         public DbSet<ProjectStaff> ProjectStaff { get; set; }
         public DbSet<StaffSkills> StaffSkills { get; set; }
+        public DbSet<Cert> Certs { get; set; }
 
+        public DbSet<CertCategory> CertCategories { get; set; }
+
+        public DbSet<StaffCert> StaffCerts { get; set; }
         public DbSet<CalendarProjectStaff> CalendarProjectStaff { get; set; }
         //configure relationships
 
@@ -93,7 +96,20 @@ namespace TFBackend.Data
                 .HasForeignKey(s => s.SkillId);
 
             //Staff and Client - many to many
-
+            modelBuilder.Entity<StaffCert>()
+                .HasKey( sc => new {sc.StaffId , sc.CertId });
+            modelBuilder.Entity<StaffCert>()
+                .HasOne(cs => cs.Staff )
+                .WithMany(cs => cs.StaffCerts)
+                .HasForeignKey(cs => cs.StaffId);
+            modelBuilder.Entity<StaffCert>()
+                .HasOne(cs => cs.Cert)
+                .WithMany(cs => cs.Staffs)
+                .HasForeignKey(cs => cs.CertId);
+            modelBuilder.Entity<Cert>()
+               .HasOne<CertCategory>(cs => cs.CertCategory)
+               .WithMany(cs => cs.Certs)
+               .HasForeignKey(cs => cs.CertCategoryId);
             //Staff and Skills - many to many
             modelBuilder.Entity<StaffSkills>()
                 .HasKey(ss => new { ss.StaffId, ss.SkillId });

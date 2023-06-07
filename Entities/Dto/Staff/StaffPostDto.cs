@@ -1,4 +1,5 @@
-﻿using TFBackend.Models;
+﻿using TFBackend.Entities.Dto.Certs;
+using TFBackend.Models;
 namespace TFBackend.Entities.Dto.Staff
 {
     public class StaffPostDto
@@ -12,5 +13,6 @@ namespace TFBackend.Entities.Dto.Staff
         public string Password { get; set; }
         public List<int>? SkillIds { get; set; }
 
+        public List<StaffCertDto>? CertIds { get; set; }
     }
 }

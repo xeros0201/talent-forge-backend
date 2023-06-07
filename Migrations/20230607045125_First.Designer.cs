@@ -12,8 +12,8 @@ using TFBackend.Data;
 namespace TFBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230424042419_Add-username")]
-    partial class Addusername
+    [Migration("20230607045125_First")]
+    partial class First
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -39,6 +39,9 @@ namespace TFBackend.Migrations
                     b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
@@ -51,6 +54,9 @@ namespace TFBackend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ManagerId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -69,7 +75,76 @@ namespace TFBackend.Migrations
 
                     b.HasIndex("LocationId");
 
+                    b.HasIndex("ManagerId");
+
                     b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.CalendarProjectStaff", b =>
+                {
+                    b.Property<int>("ProjectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StaffId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DayStatus")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsHoliday")
+                        .HasColumnType("bit");
+
+                    b.HasKey("ProjectId", "StaffId", "Date");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("CalendarProjectStaff");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.Cert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("CertCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CertCategoryId");
+
+                    b.ToTable("Certs");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.CertCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CertCategories");
                 });
 
             modelBuilder.Entity("TFBackend.Models.Client", b =>
@@ -84,6 +159,10 @@ namespace TFBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ClientSince")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("LastUpdated")
                         .HasColumnType("nvarchar(max)");
 
@@ -91,14 +170,22 @@ namespace TFBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TotalProjects")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Username")
+                    b.Property<string>("Picture")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("password")
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StreetName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StreetNo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Suburb")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -186,6 +273,18 @@ namespace TFBackend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 2002,
+                            Name = "Staff"
+                        },
+                        new
+                        {
+                            Id = 1001,
+                            Name = "Manager"
+                        });
                 });
 
             modelBuilder.Entity("TFBackend.Models.Skill", b =>
@@ -229,18 +328,17 @@ namespace TFBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Picture")
+                    b.Property<string>("Password")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Picture")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("RoleId")
                         .HasColumnType("int");
 
                     b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -251,19 +349,40 @@ namespace TFBackend.Migrations
                     b.ToTable("Staff");
                 });
 
-            modelBuilder.Entity("TFBackend.Models.StaffClient", b =>
+            modelBuilder.Entity("TFBackend.Models.StaffCert", b =>
                 {
                     b.Property<int>("StaffId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClientId")
+                    b.Property<int>("CertId")
                         .HasColumnType("int");
 
-                    b.HasKey("StaffId", "ClientId");
+                    b.Property<DateTime>("AcquiredDate")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("ClientId");
+                    b.Property<string>("CertLink")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("StaffClients");
+                    b.Property<DateTime>("ExpiredDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InterNationalId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IssuingOrganisation")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RenewalDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("StaffId", "CertId");
+
+                    b.HasIndex("CertId");
+
+                    b.ToTable("StaffCerts");
                 });
 
             modelBuilder.Entity("TFBackend.Models.StaffSkills", b =>
@@ -295,11 +414,47 @@ namespace TFBackend.Migrations
                         .WithMany("Projects")
                         .HasForeignKey("LocationId");
 
+                    b.HasOne("TFBackend.Models.Staff", "Manager")
+                        .WithMany("Projects")
+                        .HasForeignKey("ManagerId");
+
                     b.Navigation("Department");
 
                     b.Navigation("Location");
 
+                    b.Navigation("Manager");
+
                     b.Navigation("client");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.CalendarProjectStaff", b =>
+                {
+                    b.HasOne("TFBackend.Models.BBProject", "Project")
+                        .WithMany("CalendarProjectStaff")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TFBackend.Models.Staff", "Staff")
+                        .WithMany("CalendarProjectStaff")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.Cert", b =>
+                {
+                    b.HasOne("TFBackend.Models.CertCategory", "CertCategory")
+                        .WithMany("Certs")
+                        .HasForeignKey("CertCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CertCategory");
                 });
 
             modelBuilder.Entity("TFBackend.Models.ProjectSkill", b =>
@@ -349,21 +504,21 @@ namespace TFBackend.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("TFBackend.Models.StaffClient", b =>
+            modelBuilder.Entity("TFBackend.Models.StaffCert", b =>
                 {
-                    b.HasOne("TFBackend.Models.Client", "Client")
-                        .WithMany("StaffClients")
-                        .HasForeignKey("ClientId")
+                    b.HasOne("TFBackend.Models.Cert", "Cert")
+                        .WithMany("Staffs")
+                        .HasForeignKey("CertId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TFBackend.Models.Staff", "Staff")
-                        .WithMany("StaffClients")
+                        .WithMany("StaffCerts")
                         .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Client");
+                    b.Navigation("Cert");
 
                     b.Navigation("Staff");
                 });
@@ -389,16 +544,26 @@ namespace TFBackend.Migrations
 
             modelBuilder.Entity("TFBackend.Models.BBProject", b =>
                 {
+                    b.Navigation("CalendarProjectStaff");
+
                     b.Navigation("ProjectSkill");
 
                     b.Navigation("ProjectStaff");
                 });
 
+            modelBuilder.Entity("TFBackend.Models.Cert", b =>
+                {
+                    b.Navigation("Staffs");
+                });
+
+            modelBuilder.Entity("TFBackend.Models.CertCategory", b =>
+                {
+                    b.Navigation("Certs");
+                });
+
             modelBuilder.Entity("TFBackend.Models.Client", b =>
                 {
                     b.Navigation("Projects");
-
-                    b.Navigation("StaffClients");
                 });
 
             modelBuilder.Entity("TFBackend.Models.Department", b =>
@@ -425,9 +590,13 @@ namespace TFBackend.Migrations
 
             modelBuilder.Entity("TFBackend.Models.Staff", b =>
                 {
+                    b.Navigation("CalendarProjectStaff");
+
                     b.Navigation("ProjectStaff");
 
-                    b.Navigation("StaffClients");
+                    b.Navigation("Projects");
+
+                    b.Navigation("StaffCerts");
 
                     b.Navigation("StaffSkills");
                 });

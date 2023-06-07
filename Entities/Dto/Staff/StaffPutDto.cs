@@ -1,4 +1,6 @@
-﻿namespace TFBackend.Entities.Dto.Staff
+﻿using TFBackend.Entities.Dto.Certs;
+
+namespace TFBackend.Entities.Dto.Staff
 {
     public class StaffPutDto
     {
@@ -8,5 +10,6 @@
         public string? Available { get; set; }
         public string? AvailableDate { get; set; }
         public List<int>? SkillIds { get; set; }
+        public List<StaffCertDto>? CertIds { get; set; }
     }
 }
