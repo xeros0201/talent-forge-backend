@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -60,6 +61,59 @@ namespace TFBackend.Controllers
             }
 
             if(!_calendarRepository.Save())
+                return CustomResult("Bad request", System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success");
+
+        }
+        [HttpPut("array/")]
+        public IActionResult PutAllProject(int projectId ,int staffId ,List<CalendarProjectStaffPostDto> objDtos)
+        {
+
+            var allCalendar = _context.CalendarProjectStaff.Where(c => c.ProjectId == projectId && c.StaffId == staffId);
+
+            foreach(var calendar in allCalendar)
+            {
+            _context.CalendarProjectStaff.Remove(calendar);
+            }
+            foreach (var objDto in objDtos)
+            {
+
+                var projectCheck = ProjectCheck(objDto.ProjectId);
+                var staffCheck = StaffCheck(objDto.StaffId);
+                if (!projectCheck)
+                    return CustomResult("One of the Project Id does not exist", System.Net.HttpStatusCode.BadRequest);
+                if (!staffCheck)
+                    return CustomResult("One of the Staff Id does not exist", System.Net.HttpStatusCode.BadRequest);
+
+                var createObj = _calendarRepository.Create(objDto);
+                if (!createObj)
+                    return CustomResult("Create project failed", System.Net.HttpStatusCode.BadRequest);
+            }
+
+            if (!_calendarRepository.Save())
+                return CustomResult("Bad request", System.Net.HttpStatusCode.BadRequest);
+            return CustomResult("Success");
+
+        }
+
+        [HttpPut()]
+        public IActionResult PutOneProject(int projectId, int staffId,DateTime Date, CalendarPut paypoad )
+        {
+
+            var cell = _context.CalendarProjectStaff.Where(c => c.ProjectId == projectId && c.StaffId == staffId && c.Date == Date).FirstOrDefault();
+
+            
+            if(paypoad.DayStatus != null)
+            {
+                cell.DayStatus = paypoad.DayStatus;
+            }
+            
+            if (paypoad.IsHoliday != null)
+            {
+                cell.IsHoliday = paypoad.IsHoliday;
+            }
+
+            if (!_calendarRepository.Save())
                 return CustomResult("Bad request", System.Net.HttpStatusCode.BadRequest);
             return CustomResult("Success");
 

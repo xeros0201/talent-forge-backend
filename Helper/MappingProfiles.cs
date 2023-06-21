@@ -22,7 +22,8 @@ namespace TFBackend.Helper
                   .ForMember(dest => dest.StaffSkills, opt => opt.MapFrom(src => src.StaffSkills.Select(ps => ps.Skill).ToList()));
             CreateMap<Department, DepartmentDto>();
             CreateMap<Staff, StaffCalendarDto>();
-            CreateMap<Staff, StaffOnlyCalendarDto>();
+            CreateMap<Staff, StaffOnlyCalendarDto>()
+                .ForMember(dest => dest.StaffSkills, opt => opt.MapFrom(src => src.StaffSkills.Select(ps => ps.Skill).ToList()));
             CreateMap<Location, LocationDto>();
             CreateMap<Skill,SkillsDto>();
             CreateMap<StaffSkills, SkillsDto>();
