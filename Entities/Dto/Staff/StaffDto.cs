@@ -3,6 +3,7 @@ using TFBackend.Models;
 using TFBackend.Entities.Dto.Role;
 using TFBackend.Entities.Dto.BBProject;
 using TFBackend.Entities.Dto.CalendarProjectStaff;
+using TFBackend.Entities.Dto.Certs;
 
 namespace TFBackend.Entities.Dto.Staff
 {
@@ -22,6 +23,8 @@ namespace TFBackend.Entities.Dto.Staff
         //many to many relationship
 
         public List<SkillsDto>? StaffSkills { get; set; }
+
+        public List<CertNoStaffDto> StaffCerts { get; set; }
 
         public List<BBProjectDto>? ProjectStaff { get; set; }
 

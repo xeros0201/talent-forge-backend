@@ -10,6 +10,7 @@ using TFBackend.Entities.Dto.Clients;
 using TFBackend.Entities.Dto.StaffSkills;
 using TFBackend.Entities.Dto.ProjectSkills;
 using TFBackend.Entities.Dto.CalendarProjectStaff;
+using TFBackend.Entities.Dto.Certs;
 
 namespace TFBackend.Helper
 {
@@ -38,6 +39,8 @@ namespace TFBackend.Helper
             CreateMap<CalendarProjectStaff, CalendarProjectDto>();
             CreateMap<CalendarProjectStaff, CalendarNoStaff>();
             CreateMap<Client, ClientWithProjectDto>();
+            CreateMap<CertCategory, CertNoStaffDto>();
+            CreateMap<Cert, CertNoStaffList>();
             CreateMap<ProjectSkill, SkillsDto>();
             CreateMap<ProjectStaff, StaffDto>();
             CreateMap<Client, ClientDto>();

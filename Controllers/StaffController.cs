@@ -43,7 +43,8 @@ namespace TFBackend.Controllers
                     .Include( s => s.StaffSkills)
                         .ThenInclude(st => st.Skill)
                      .Include(s => s.ProjectStaff)
-                        .ThenInclude(st => st.Project).ToList());
+                        .ThenInclude(st => st.Project)
+                        .ToList());
                      
             if (staff == null)
             {
@@ -86,7 +87,10 @@ namespace TFBackend.Controllers
                     .Include(s => s.StaffSkills)
                         .ThenInclude(st => st.Skill)
                      .Include(s => s.ProjectStaff)
-                        .ThenInclude(st => st.Project).Where(s =>s.Id == id)
+                        .ThenInclude(st => st.Project)
+                     .Include(st => st.StaffCerts).ThenInclude(c =>c.Cert).ThenInclude( cc => cc.CertCategory)
+                
+                        .Where(s =>s.Id == id)
                                 .FirstOrDefault());
             return CustomResult("Success",staffDto);
         }
