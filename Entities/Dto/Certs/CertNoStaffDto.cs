@@ -9,7 +9,7 @@ namespace TFBackend.Entities.Dto.Certs
  
         public int CertId { get; set; }
 
-        public CertNoStaffDto Cert { get; set; }
+        public CertNoStaffList Cert { get; set; }
  
 
  

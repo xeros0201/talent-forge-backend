@@ -106,39 +106,7 @@ namespace TFBackend.Controllers
             }
         }
 
-        [HttpPost("create-record")]
-        public IActionResult PostCertReCord(CertCateStaff CertDto)
-        {
-            if (!CheckCatetExist(CertDto.CertId))
-                return CustomResult("This cert not exist !", System.Net.HttpStatusCode.BadRequest);
-          
-            if (!_context.Staff.Where(s => s.Id == CertDto.StaffId ).Any())
-                return CustomResult("Staff not exist !", System.Net.HttpStatusCode.BadRequest);
-            var NewCert = new StaffCert()
-            {
-                StaffId = CertDto.StaffId,  
-                CertId = CertDto.CertId,
-                AcquiredDate= CertDto.AcquiredDate,
-                ExpiredDate= CertDto.ExpiredDate,
-                InterNationalId= CertDto.InterNationalId,
-                IssuingOrganisation = CertDto.IssuingOrganisation,
-                CertLink =CertDto.CertLink,
-                RenewalDate= CertDto.RenewalDate,
-            };
-            _context.StaffCerts.Add(NewCert);
-
-            if (Save())
-            {
-
-                return CustomResult("Success", NewCert);
-            }
-            else
-            {
-
-                return CustomResult("Bad request", System.Net.HttpStatusCode.BadGateway);
-
-            }
-        }
+       
        
 
 

@@ -39,8 +39,10 @@ namespace TFBackend.Helper
             CreateMap<CalendarProjectStaff, CalendarProjectDto>();
             CreateMap<CalendarProjectStaff, CalendarNoStaff>();
             CreateMap<Client, ClientWithProjectDto>();
-            CreateMap<CertCategory, CertNoStaffDto>();
+            CreateMap<StaffCert, CertNoStaffDto>();
             CreateMap<Cert, CertNoStaffList>();
+            CreateMap<Cert, CertNoStaffDto>();
+            CreateMap<CertCategory, CateNoCert>();
             CreateMap<ProjectSkill, SkillsDto>();
             CreateMap<ProjectStaff, StaffDto>();
             CreateMap<Client, ClientDto>();
